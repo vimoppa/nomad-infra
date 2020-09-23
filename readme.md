@@ -118,3 +118,9 @@ Before moving onto the next steps, ensure the following environment variables ar
 
 [Packer](https://www.packer.io/intro/index.html) is HashiCorp's open source tool for creating identical machine images for multiple platforms from a single source configuration.
 The machine image created here can be customized through modifications to the [build configuration file](./packer.json) and the [shell script](./shared/scripts/install.sh).
+
+Use the following command to build the machine image:
+
+``` console
+packer build packer.json
+```
