@@ -38,13 +38,21 @@ After installation, authenticate `gcloud` with the following command:
 gcloud auth login
 ```
 
+## Expose environment variables
+
+Replace or fill valid environment variables
+
+``` console
+cp .env.local .env
+```
+
 ## Create a New Project
 
 Generate a project ID with the following command:
 *Replace PROJECT_NAME with the name of your desired project*
 
 ``` console
-export GOOGLE_PROJECT="PROJECT_NAME-$(cat /dev/random | head -c 5 | xxd -p)"
+export GOOGLE_PROJECT="PROJECT_NAME"
 ```
 
 Using that project ID, create a new GCP [project](https://cloud.google.com/docs/overview#projects):
