@@ -12,7 +12,7 @@ login:
 setup: 
 	scripts/setup.sh
 
-build: setup
+build: 
 	packer build packer.json
 
 clean:
