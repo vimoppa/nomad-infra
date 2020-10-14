@@ -12,7 +12,7 @@ Includes:
 * Install the GCP SDK CLI Tools, if you're not using the Cloud Shell.
 * Creating a new GCP Project, along with a Terraform Service Account.
 * Building a golden image using Packer.
-* [Deployment a cluster with terraform](https://github.com/ucontex/terraform).
+<!-- * [Deployment a cluster with terraform](https://github.com/ucontex/terraform). -->
 
 ## Install HashiCorp Tools
 

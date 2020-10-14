@@ -4,13 +4,16 @@
 
 
 .PHONY: all
-all: login build
+all: login setup build
 
 login:
 	gcloud auth login --no-launch-browser
 
-# setup: 
-# 	sudo ./setup_sa.sh
+setup: 
+	scripts/setup.sh
 
-build:
+build: setup
 	packer build packer.json
+
+clean:
+	scripts/cleanup.sh

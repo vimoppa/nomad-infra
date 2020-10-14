@@ -3,18 +3,20 @@
         "disk_size_gb": "50",
         "zone": "us-central1-a",
         "project": "{{env `GOOGLE_PROJECT`}}",
-        "source_image_family": "ubuntu-1604-lts"
+        "source_image_family": "ubuntu-1604-lts",
+        "account_file": "./cred/packer_sa_key.json"
     },
     "builders": [
         {
+            "type": "googlecompute",
+            "project_id": "{{user `project`}}",
+            "zone": "{{user `zone`}}",
+            "account_file": "{{user `account_file`}}",
             "name": "hashistack",
             "state_timeout": "15m",
-            "type": "googlecompute",
             "ssh_username": "ubuntu",
-            "zone": "{{user `zone`}}",
             "image_name": "hashistack",
             "machine_type": "n1-standard-1",
-            "project_id": "{{user `project`}}",
             "disk_size": "{{user `disk_size_gb`}}",
             "source_image_family": "{{user `source_image_family`}}",
             "image_description": "HashiStack Image fitted with Consul, Nomad, Vault, Java"
@@ -30,7 +32,7 @@
                 "consul_version=1.8.4",
                 "consul_template_version=0.25.1"
             ],
-            "script": "./shared/scripts/image.sh"
+            "script": "scripts/hashistack.sh"
         }
     ]
 }
