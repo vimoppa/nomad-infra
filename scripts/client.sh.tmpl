@@ -1,0 +1,134 @@
+#! /bin/bash
+
+set -xe
+
+PUBLIC_IP=$(curl -L http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip -H "Metadata-Flavor:Google")
+PRIVATE_IP=$(curl -L http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip -H "Metadata-Flavor:Google")
+
+function configConsul() {
+	(
+		cat <<-EOF
+			datacenter = "${datacenter}"
+			data_dir   = "/opt/consul/data"
+			bind_addr  = "0.0.0.0"
+			log_level  = "DEBUG"
+
+			advertise_addr     = "$PRIVATE_IP"
+			advertise_addr_wan = "$PRIVATE_IP"
+			addresses = {
+			http = "$PRIVATE_IP"
+			}
+
+			client_addr = "0.0.0.0"
+			server      = false
+			ui          = true
+
+			retry_join = [
+			"provider=gce project_name=${project_name} tag_value=${tag_value}"
+			]
+
+			connect {
+			enabled = true
+			}
+
+			ports {}
+		EOF
+	) | sudo tee /etc/consul.d/consul.hcl
+
+	(
+		cat <<-EOF
+			[Unit]
+			Description=consul agent
+			Requires=network-online.target
+			After=network-online.target
+
+			[Service]
+			Restart=on-failure
+			ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d
+			ExecReload=/bin/kill -HUP $MAINPID
+
+			[Install]
+			WantedBy=multi-user.target
+		EOF
+	) | sudo tee /etc/systemd/system/consul.service
+
+	sudo systemctl enable consul.service
+	sudo systemctl start consul
+}
+
+function configNomad() {
+	(
+		cat <<-EOF
+			data_dir   = "/opt/nomad/data"
+			datacenter = "${datacenter}"
+			region     = "${region}"
+
+			bind_addr = "0.0.0.0"
+
+			advertise {
+			 http = "$PRIVATE_IP"
+			 rpc  = "$PRIVATE_IP"
+			 serf = "$PRIVATE_IP"
+			}
+
+			client {
+			 enabled = true
+
+			 server_join {
+			  retry_join = ["provider=gce project_name=${project_name} tag_value=${tag_value}"]
+			 }
+			}
+
+			# consul {
+			#  address = "127.0.0.1:8500"
+			#  auto_advertise      = true
+			#  server_auto_join    = true
+			#  client_auto_join    = true
+			# }
+
+			# vault {
+			#  enabled = true
+			#  address = "http://nomad1.service.consul:8200"
+			# }
+		EOF
+	) | sudo tee /etc/nomad.d/nomad.hcl
+
+	(
+		cat <<-EOF
+			[Unit]
+			Description=Nomad
+			Documentation=https://nomadproject.io/docs/
+			Wants=network-online.target
+			After=network-online.target
+
+			[Service]
+			ExecReload=/bin/kill -HUP $MAINPID
+			ExecStart=/usr/local/bin/nomad agent -config /etc/nomad.d
+			KillMode=process
+			KillSignal=SIGINT
+			LimitNOFILE=infinity
+			LimitNPROC=infinity
+			Restart=on-failure
+			RestartSec=2
+			StartLimitBurst=3
+			StartLimitIntervalSec=10
+			TasksMax=infinity
+
+			[Install]
+			WantedBy=multi-user.target
+		EOF
+	) | sudo tee /etc/systemd/system/nomad.service
+
+	sudo systemctl enable nomad
+	sudo systemctl start nomad
+}
+
+# configure consul client
+configConsul
+
+sleep 5
+
+# configure nomad client
+configNomad
+
+sudo systemctl daemon-reload

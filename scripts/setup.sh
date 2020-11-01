@@ -56,8 +56,8 @@ gcloud iam service-accounts keys create packer_sa_key.json \
 gcloud services enable compute.googleapis.com
 
 # enable sql-component and sql-admin google apis
-# # gcloud services enable sql-component.googleapis.com
-# # gcloud services enable sqladmin.googleapis.com
+gcloud services enable sql-component.googleapis.com
+gcloud services enable sqladmin.googleapis.com
 
 # create storage bucket for remote state
 gsutil mb -b on -l us-east1 gs://$GOOGLE_PROJECT-remote-state/

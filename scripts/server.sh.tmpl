@@ -1,0 +1,199 @@
+#! /bin/bash
+
+set -xe
+
+PUBLIC_IP=$(curl -L http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip -H "Metadata-Flavor:Google")
+PRIVATE_IP=$(curl -L http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip -H "Metadata-Flavor:Google")
+export VAULT_TOKEN=vault
+export VAULT_ADDR="http://localhost:8200"
+
+function configConsul() {
+	(
+		cat <<-EOF
+			datacenter = "${datacenter}"
+			data_dir   = "/opt/consul/data"
+			log_level  = "DEBUG"
+
+			bind_addr          = "0.0.0.0"
+			advertise_addr     = "$PRIVATE_IP"
+			advertise_addr_wan = "$PRIVATE_IP"
+
+			bootstrap_expect   = ${bootstrap_expect}
+			client_addr = "0.0.0.0"
+			server      = true
+			ui          = true
+
+			retry_join = [
+			"provider=gce project_name=${project_name} tag_value=${tag_value}"
+			]
+
+			raft_protocol = 3
+
+			autopilot {
+			cleanup_dead_servers      = true
+			last_contact_threshold    = "200ms"
+			max_trailing_logs         = 250
+			server_stabilization_time = "10s"
+			}
+
+			connect {
+			enabled = true
+			}
+
+			ports {}
+		EOF
+	) | sudo tee /etc/consul.d/consul.hcl
+
+	(
+		cat <<-EOF
+			[Unit]
+			Description=consul agent
+			Requires=network-online.target
+			After=network-online.target
+
+			[Service]
+			Restart=on-failure
+			ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d
+			# ExecStart=/usr/local/bin/consul agent -dev
+			ExecReload=/bin/kill -HUP $MAINPID
+
+			[Install]
+			WantedBy=multi-user.target
+		EOF
+	) | sudo tee /etc/systemd/system/consul.service
+
+	sudo systemctl enable consul
+	sudo systemctl start consul
+}
+
+function configVault() {
+	(
+		cat <<-EOF
+			[Unit]
+			Description=vault
+			Requires=network-online.target
+			After=network-online.target
+
+			[Service]
+			Restart=on-failure
+			ExecStart=/usr/local/bin/vault server -dev -dev-listen-address="0.0.0.0:8200" -dev-root-token-id="vault"
+			ExecReload=/bin/kill -HUP $MAINPID
+
+			[Install]
+			WantedBy=multi-user.target
+		EOF
+	) | sudo tee /etc/systemd/system/vault.service
+
+	sudo systemctl enable vault
+	sudo systemctl start vault
+
+	# vault policy write rabbit /vagrant/vault/rabbit-policy.hcl
+	# vault policy write nomad-server /vagrant/vault/nomad-server-policy.hcl
+	# vault write auth/token/roles/nomad-cluster @/vagrant/vault/nomad-cluster-role.json
+
+	vault_token=$(vault token create -policy nomad-server -period 72h -orphan -field=token)
+
+	# domain="mshome.net"
+	# vault secrets enable pki
+	# vault secrets tune -max-lease-ttl=87600h pki
+
+	# vault write -field=certificate pki/root/generate/internal common_name="$domain" ttl=87600h \
+	#     > /vagrant/vault/mshome.crt
+
+	# vault write pki/config/urls \
+	#     issuing_certificates="$VAULT_ADDR/v1/pki/ca" \
+	#     crl_distribution_points="$VAULT_ADDR/v1/pki/crl"
+
+	# vault write pki/roles/rabbit \
+	#     allowed_domains="$domain" \
+	#     allow_subdomains=true \
+	#     generate_lease=true \
+	#     max_ttl="720h"
+}
+
+function configNomad() {
+	(
+		cat <<-EOF
+			data_dir   = "/opt/nomad/data"
+			datacenter = "${datacenter}"
+			region     = "${region}"
+
+			bind_addr = "0.0.0.0"
+			log_level = "DEBUG"
+
+			advertise {
+			 # Defaults to the node's hostname. If the hostname resolves to a loopback
+			 # address you must manually configure advertise addresses.
+			 http = "$PRIVATE_IP"
+			 rpc  = "$PRIVATE_IP"
+			 serf = "$PRIVATE_IP"
+			}
+
+			server {
+			 enabled = true
+			 bootstrap_expect = "${bootstrap_expect}"
+
+			 server_join {
+			  retry_join = ["provider=gce project_name=${project_name} tag_value=${tag_value}"]
+			 }
+			}
+
+			# consul {
+			#  address = "127.0.0.1:8500"
+			#  auto_advertise      = true
+			#  server_auto_join    = true
+			#  client_auto_join    = true
+			# }
+
+			# vault {
+			#  enabled = true
+			#  address = "http://localhost:8200"
+			#  task_token_ttl = "1h"
+			#  create_from_role = "nomad-cluster"
+			#  token = "$vault_token"
+			# }
+		EOF
+	) | sudo tee /etc/nomad.d/nomad.hcl
+
+	(
+		cat <<-EOF
+			[Unit]
+			Description=Nomad
+			Documentation=https://nomadproject.io/docs/
+			Wants=network-online.target
+			After=network-online.target
+
+			[Service]
+			ExecReload=/bin/kill -HUP $MAINPID
+			ExecStart=/usr/local/bin/nomad agent -config /etc/nomad.d
+			KillMode=process
+			KillSignal=SIGINT
+			LimitNOFILE=infinity
+			LimitNPROC=infinity
+			Restart=on-failure
+			RestartSec=2
+			StartLimitBurst=3
+			StartLimitIntervalSec=10
+			TasksMax=infinity
+
+			[Install]
+			WantedBy=multi-user.target
+		EOF
+	) | sudo tee /etc/systemd/system/nomad.service
+
+	sudo systemctl enable nomad
+	sudo systemctl start nomad
+}
+
+# configure consul server
+configConsul
+
+# # configure vault server
+configVault
+
+sleep 5
+
+# configure nomad server
+configNomad
+
+sudo systemctl daemon-reload
