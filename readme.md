@@ -126,7 +126,7 @@ Before moving onto the next steps, ensure the following environment variables ar
 ## Build HashiStack Golden Image with Packer
 
 [Packer](https://www.packer.io/intro/index.html) is HashiCorp's open source tool for creating identical machine images for multiple platforms from a single source configuration.
-The machine image created here can be customized through modifications to the [build configuration file](./packer/image.json) and the [shell script](./shared/scripts/install.sh).
+The machine image created here can be customized through modifications to the [build configuration file](./packer/image.pkr.hcl) and the [shell script](./shared/scripts/install.sh).
 
 Use the following command to build the machine image:
 
