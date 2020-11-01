@@ -2,6 +2,13 @@ name: Packer Image VM
 
 on:
   push:
+    paths:
+      - "packer/**"
+    branches:
+      - master
+  pull_request:
+    paths:
+      - "packer/**"
 
 jobs:
   packer:
@@ -17,7 +24,7 @@ jobs:
         uses: operatehappy/packer-github-actions@master
         with:
           command: validate
-          arguments: "-syntax-only -var 'project=null'"
+          arguments: "-syntax-only -var 'project=none'"
           target: packer/image.pkr.hcl
 
       # build artifact
