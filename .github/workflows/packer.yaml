@@ -1,0 +1,38 @@
+name: Packer Image VM
+
+on:
+  push:
+    paths:
+      - "packer/**"
+    branches:
+      - master
+  pull_request:
+    paths:
+      - "packer/**"
+
+jobs:
+  packer:
+    runs-on: ubuntu-latest
+    name: Image VM Build with Packer
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      # validate templates
+      - name: Validate Template
+        uses: operatehappy/packer-github-actions@master
+        with:
+          command: validate
+          arguments: "-syntax-only -var 'project=none'"
+          target: packer/image.pkr.hcl
+
+      # build artifact
+      - name: Build Artifact
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        uses: operatehappy/packer-github-actions@master
+        with:
+          command: build
+          arguments: "-color=false -on-error=abort -var 'project=null'"
+          target: packer/image.pkr.hcl
+      # additional steps to process artifacts
