@@ -1,6 +1,6 @@
 variable "project" {
   type    = string
-  default = "ucontex-app"
+  default = ""
 }
 
 variable "region" {

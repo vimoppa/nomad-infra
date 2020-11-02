@@ -1,6 +1,6 @@
-# terraform {
-#   backend "gcs" {
-#     bucket = "{var.project}-remote-state"
-#     prefix = "tf-backend"
-#   }
-# }
+terraform {
+  backend "gcs" {
+    bucket = "ucontext-app-remote-state"
+    prefix = "tf-backend"
+  }
+}
