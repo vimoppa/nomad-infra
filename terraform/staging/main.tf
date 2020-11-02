@@ -62,17 +62,17 @@ resource "google_compute_firewall" "allow-ingress-from-iap" {
   }
 }
 
-resource "google_compute_firewall" "allow_ssh_office" {
-  name    = "allow-ssh-office"
-  network = module.vpc_network.network
+# resource "google_compute_firewall" "allow_ssh_office" {
+#   name    = "allow-ssh-office"
+#   network = module.vpc_network.network
 
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["22"]
+#   }
 
-  target_tags = ["allow-ssh"]
-}
+#   target_tags = ["allow-ssh"]
+# }
 
 resource "google_compute_firewall" "consul-http" {
   name          = "consul-http"
@@ -167,19 +167,19 @@ resource "google_compute_firewall" "services_endpoint" {
 # Create the bastion host to access private instances
 # ---------------------------------------------------------------------------------------------------------------------
 
-# module "bastion_host" {
-#   # When using these modules in your own templates, you will need to use a Git URL with a ref attribute that pins you
-#   # to a specific version of the modules, such as the following example:
-#   # source = "github.com/gruntwork-io/terraform-google-network.git//modules/bastion-host?ref=v0.1.2"
-#   source = "../modules/bastion-host"
+module "bastion_host" {
+  # When using these modules in your own templates, you will need to use a Git URL with a ref attribute that pins you
+  # to a specific version of the modules, such as the following example:
+  # source = "github.com/gruntwork-io/terraform-google-network.git//modules/bastion-host?ref=v0.1.2"
+  source = "../modules/bastion-host"
 
-#   instance_name = "bastion-host-${var.environment}-${random_string.suffix.result}"
-#   subnetwork    = module.vpc_network.public_subnetwork
+  instance_name = "bastion-host-${var.environment}-${random_string.suffix.result}"
+  subnetwork    = module.vpc_network.public_subnetwork
 
-#   project = var.project
-#   zone    = var.zone
-#   sshkeys = "ubuntu:${file(var.key_name)}"
-# }
+  project = var.project
+  zone    = var.zone
+  sshkeys = "ubuntu:${file(var.key_name)}"
+}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Create Server Instances and Managed Instance Group
@@ -197,7 +197,7 @@ module "server_instance_template" {
   source_image_project = data.google_compute_image.hashistack.project
   source_image_family  = data.google_compute_image.hashistack.family
   disk_size_gb         = var.disk_size_gb
-  tags                 = [var.join_tag_vaule, "allow-ssh"]
+  tags                 = [var.join_tag_vaule]
   can_ip_forward       = var.can_ip_forward
   access_config = [
     {
@@ -269,7 +269,7 @@ module "client_instance_template" {
   source_image_project = data.google_compute_image.hashistack.project
   source_image_family  = data.google_compute_image.hashistack.family
   disk_size_gb         = var.disk_size_gb
-  tags                 = [var.join_tag_vaule, "allow-ssh"]
+  tags                 = [var.join_tag_vaule]
   can_ip_forward       = var.can_ip_forward
   access_config = [
     {
