@@ -211,8 +211,8 @@ module "server_instance_template" {
       bootstrap_expect = local.server_min_instance
       datacenter       = var.region
       # region           = "gcp"
-      project_name     = var.project
-      tag_value        = var.join_tag_vaule
+      project_name = var.project
+      tag_value    = var.join_tag_vaule
     }
   )
 }
@@ -286,8 +286,8 @@ module "client_instance_template" {
       bootstrap_expect = var.target_size
       datacenter       = var.region
       # region           = "gcp"
-      project_name     = var.project,
-      tag_value        = var.join_tag_vaule
+      project_name = var.project,
+      tag_value    = var.join_tag_vaule
     }
   )
 }
