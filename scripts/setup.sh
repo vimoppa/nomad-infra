@@ -60,4 +60,4 @@ gcloud services enable sql-component.googleapis.com
 gcloud services enable sqladmin.googleapis.com
 
 # create storage bucket for remote state
-gsutil mb -b on -l us-east1 gs://$GOOGLE_PROJECT-remote-state/
+gsutil mb -b on -l us-central1 gs://$GOOGLE_PROJECT-remote-state/

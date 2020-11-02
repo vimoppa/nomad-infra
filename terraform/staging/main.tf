@@ -206,6 +206,7 @@ module "server_instance_template" {
     }
   ]
   startup_script = templatefile(
+    # templatefile function resolves absolute path
     "scripts/instance-setup.sh.tmpl",
     {
       bootstrap_expect = local.server_min_instance
@@ -277,6 +278,7 @@ module "client_instance_template" {
     }
   ]
   startup_script = templatefile(
+    # templatefile function resolves absolute path
     "scripts/instance-setup.sh.tmpl",
     {
       /*

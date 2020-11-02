@@ -1,6 +1,6 @@
 variable "project" {
   type    = string
-  default = "ucontex-app"
+  default = ""
 }
 
 variable "region" {
@@ -35,7 +35,7 @@ variable "source_image_name" {
 
 variable "terraform_service_account" {
   default = {
-    email  = "",
+    email  = "terraform@ucontex-app.iam.gserviceaccount.com",
     scopes = []
     #  scopes = ["userinfo-email", "compute-ro", "storage-ro"]
   }
