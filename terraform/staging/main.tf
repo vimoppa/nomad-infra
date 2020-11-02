@@ -130,7 +130,7 @@ resource "google_compute_firewall" "fabio-lb-http" {
 resource "google_compute_firewall" "internal" {
   name          = "internal"
   network       = module.vpc_network.network
-  source_ranges = ["${var.vpc_cidr_block}"]
+  source_ranges = [var.vpc_cidr_block]
   # source_ranges = ["0.0.0.0/0"]
 
   allow {
