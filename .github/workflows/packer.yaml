@@ -29,6 +29,7 @@ jobs:
 
       # validate templates
       - name: Validate Template
+        if: github.event_name == 'pull_request'
         uses: operatehappy/packer-github-actions@master
         with:
           command: validate
