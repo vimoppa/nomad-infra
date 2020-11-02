@@ -19,12 +19,20 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          version: '290.0.1'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.PACKER_SA_KEY }}
+          export_default_credentials: true
+      - run: gcloud info
+
       # validate templates
       - name: Validate Template
         uses: operatehappy/packer-github-actions@master
         with:
           command: validate
-          arguments: "-syntax-only -var 'project=none'"
+          arguments: "-syntax-only -var 'project=${{ secrets.GCP_PROJECT_ID }}'"
           target: packer/image.pkr.hcl
 
       # build artifact
@@ -33,6 +41,6 @@ jobs:
         uses: operatehappy/packer-github-actions@master
         with:
           command: build
-          arguments: "-color=false -on-error=abort -var 'project=null'"
+          arguments: "-color=false -on-error=abort -var 'project=${{ secrets.GCP_PROJECT_ID }}'"
           target: packer/image.pkr.hcl
       # additional steps to process artifacts
