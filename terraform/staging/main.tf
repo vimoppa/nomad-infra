@@ -206,7 +206,7 @@ module "server_instance_template" {
     }
   ]
   startup_script = templatefile(
-    "../../scripts/instance-setup.sh.tmpl",
+    "scripts/instance-setup.sh.tmpl",
     {
       bootstrap_expect = local.server_min_instance
       datacenter       = var.region
@@ -277,11 +277,11 @@ module "client_instance_template" {
     }
   ]
   startup_script = templatefile(
-    "../../scripts/instance-setup.sh.tmpl",
+    "scripts/instance-setup.sh.tmpl",
     {
-      /* 
-      expected bootstrap client would mock target_size. 
-      Recommended; bootstrap_expect = local.server_min_instance 
+      /*
+      expected bootstrap client would mock target_size.
+      Recommended; bootstrap_expect = local.server_min_instance
       */
       bootstrap_expect = var.target_size
       datacenter       = var.region
