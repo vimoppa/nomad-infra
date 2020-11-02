@@ -4,13 +4,34 @@
 
 
 .PHONY: all
-all: login build
+all: login setup build
 
-login:
+gcloud-auth:
 	gcloud auth login --no-launch-browser
 
-# setup: 
-# 	sudo ./setup_sa.sh
+setup: 
+	scripts/setup.sh
 
-build:
-	packer build packer.json
+packer-fix: 
+	packer fix packer/image.pkr.hcl
+
+packer-validate: 
+	packer validate packer/image.pkr.hcl
+
+packer-build: 
+	packer build packer/image.pkr.hcl
+
+terraform-fmt:
+	cd terraform/staging/
+	terraform fmt
+
+terraform-plan:
+	cd terraform/staging/
+	terraform plan
+
+terraform-apply:
+	cd terraform/staging/
+	terraform apply --auto-approve
+
+clean:
+	scripts/cleanup.sh
