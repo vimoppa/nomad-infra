@@ -62,17 +62,17 @@ resource "google_compute_firewall" "allow-ingress-from-iap" {
   }
 }
 
-# resource "google_compute_firewall" "allow_ssh_office" {
-#   name    = "allow-ssh-office"
-#   network = module.vpc_network.network
+resource "google_compute_firewall" "allow_ssh_office" {
+  name    = "allow-ssh-office"
+  network = module.vpc_network.network
 
-#   allow {
-#     protocol = "tcp"
-#     ports    = ["22"]
-#   }
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
 
-#   target_tags = ["allow-ssh"]
-# }
+  target_tags = ["allow-ssh"]
+}
 
 resource "google_compute_firewall" "consul-http" {
   name          = "consul-http"
@@ -197,7 +197,7 @@ module "server_instance_template" {
   source_image_project = data.google_compute_image.hashistack.project
   source_image_family  = data.google_compute_image.hashistack.family
   disk_size_gb         = var.disk_size_gb
-  tags                 = [var.join_tag_vaule]
+  tags                 = [var.join_tag_vaule, "allow-ssh"]
   can_ip_forward       = var.can_ip_forward
   access_config = [
     {
@@ -269,7 +269,7 @@ module "client_instance_template" {
   source_image_project = data.google_compute_image.hashistack.project
   source_image_family  = data.google_compute_image.hashistack.family
   disk_size_gb         = var.disk_size_gb
-  tags                 = [var.join_tag_vaule]
+  tags                 = [var.join_tag_vaule, "allow-ssh"]
   can_ip_forward       = var.can_ip_forward
   access_config = [
     {
