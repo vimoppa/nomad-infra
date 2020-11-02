@@ -178,7 +178,8 @@ module "bastion_host" {
 
   project = var.project
   zone    = var.zone
-  sshkeys = "ubuntu:${file(var.key_name)}"
+  sshkeys = ""
+  # sshkeys = "ubuntu:${file(var.key_name)}"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
